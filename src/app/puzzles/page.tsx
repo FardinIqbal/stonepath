@@ -4,26 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { PuzzleBoard } from '@/components/PuzzleBoard';
 import { usePuzzle } from '@/hooks/usePuzzle';
+import { useTheme } from '@/lib/theme';
 import { difficultyRatings, categoryDescriptions } from '@/lib/tsumego';
 import type { PuzzleDifficulty, PuzzleCategory } from '@/lib/tsumego';
 
 const difficultyColors: Record<PuzzleDifficulty, string> = {
-  beginner: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  easy: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  hard: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  expert: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-};
-
-const categoryIcons: Record<PuzzleCategory, string> = {
-  'life-death': '',
-  capture: '',
-  escape: '',
-  connect: '',
-  cut: '',
+  beginner: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+  easy: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30',
+  medium: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
+  hard: 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30',
+  expert: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30',
 };
 
 export default function PuzzlesPage() {
+  const { theme, toggleTheme } = useTheme();
   const {
     currentPuzzle,
     selectPuzzle,
@@ -43,64 +37,78 @@ export default function PuzzlesPage() {
   const stats = getStats();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
-      {/* Ambient glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-900/5 via-transparent to-transparent blur-3xl" />
-      </div>
-
-      <main className="relative max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+      <main className="relative max-w-6xl mx-auto px-4 py-6 md:py-8">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8"
         >
           <div>
             <Link
               href="/"
-              className="text-zinc-500 hover:text-zinc-300 text-sm mb-2 inline-block transition-colors"
+              className="text-foreground-muted hover:text-foreground text-sm mb-2 inline-block transition-colors font-serif"
             >
-              ← Back to Game
+              Back to Game
             </Link>
-            <h1 className="text-2xl font-light tracking-tight">
-              Tsumego <span className="text-zinc-500">Puzzles</span>
+            <h1 className="text-2xl font-serif font-semibold tracking-tight">
+              Tsumego <span className="text-foreground-muted">Puzzles</span>
             </h1>
-            <p className="text-zinc-600 text-sm mt-1">
+            <p className="text-foreground-muted text-sm mt-1 font-serif italic">
               Train your reading with life & death problems
             </p>
           </div>
 
-          {/* Stats */}
-          <div className="flex gap-6 text-sm">
-            <div className="text-center">
-              <div className="text-xl font-semibold text-white">{stats.solved}</div>
-              <div className="text-zinc-500 text-xs">Solved</div>
+          <div className="flex items-center gap-4">
+            {/* Stats */}
+            <div className="flex gap-4 sm:gap-6 text-sm">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-foreground">{stats.solved}</div>
+                <div className="text-foreground-muted text-[10px] uppercase tracking-wider font-serif">Solved</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-accent-gold">{stats.streak}</div>
+                <div className="text-foreground-muted text-[10px] uppercase tracking-wider font-serif">Streak</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-foreground-secondary">{stats.completion}%</div>
+                <div className="text-foreground-muted text-[10px] uppercase tracking-wider font-serif">Complete</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-semibold text-amber-400">{stats.streak}</div>
-              <div className="text-zinc-500 text-xs">Streak</div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-semibold text-zinc-400">{stats.completion}%</div>
-              <div className="text-zinc-500 text-xs">Complete</div>
-            </div>
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-md hover:bg-background-secondary transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
           </div>
         </motion.header>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Puzzle list sidebar */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="w-full lg:w-72 flex-shrink-0"
+            className="w-full lg:w-64 flex-shrink-0"
           >
             {/* Quick actions */}
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => selectRandom()}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-sm font-medium transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-md bg-accent-gold/20 hover:bg-accent-gold/30 text-accent-gold text-sm font-medium transition-colors border border-accent-gold/30"
               >
                 Random Puzzle
               </button>
@@ -108,7 +116,7 @@ export default function PuzzlesPage() {
 
             {/* Difficulty filter */}
             <div className="mb-4">
-              <div className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-2">
+              <div className="text-[10px] font-serif text-foreground-muted uppercase tracking-wider mb-2">
                 Filter by Difficulty
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -132,7 +140,7 @@ export default function PuzzlesPage() {
             </div>
 
             {/* Puzzle list */}
-            <div className="space-y-1.5 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+            <div className="space-y-1.5 max-h-[calc(100vh-340px)] overflow-y-auto pr-1 hide-scrollbar">
               {filteredPuzzles.map((puzzle) => {
                 const solved = isPuzzleSolved(puzzle.id);
                 const isActive = currentPuzzle?.id === puzzle.id;
@@ -141,10 +149,10 @@ export default function PuzzlesPage() {
                   <button
                     key={puzzle.id}
                     onClick={() => selectPuzzle(puzzle)}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                    className={`w-full text-left px-3 py-2.5 rounded-md transition-all duration-200 ${
                       isActive
-                        ? 'bg-zinc-700/80 border-zinc-600'
-                        : 'bg-zinc-800/40 hover:bg-zinc-800/80 border-zinc-800/50'
+                        ? 'bg-background-secondary border-accent-gold/30'
+                        : 'bg-background-tertiary/50 hover:bg-background-secondary border-border/50'
                     } border`}
                   >
                     <div className="flex items-center gap-2">
@@ -153,7 +161,7 @@ export default function PuzzlesPage() {
                           <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                         </div>
                       )}
-                      <span className={`text-sm ${solved ? 'text-zinc-300' : 'text-zinc-400'}`}>
+                      <span className={`text-sm font-serif ${solved ? 'text-foreground' : 'text-foreground-secondary'}`}>
                         {puzzle.name}
                       </span>
                       <span
@@ -187,11 +195,11 @@ export default function PuzzlesPage() {
                   className="flex flex-col items-center"
                 >
                   {/* Puzzle info */}
-                  <div className="text-center mb-6">
-                    <h2 className="text-xl font-medium text-white mb-1">
+                  <div className="text-center mb-5">
+                    <h2 className="text-xl font-serif font-medium text-foreground mb-1">
                       {currentPuzzle.name}
                     </h2>
-                    <p className="text-sm text-zinc-500 mb-3">
+                    <p className="text-sm text-foreground-muted font-serif italic mb-3">
                       {currentPuzzle.description}
                     </p>
                     <div className="flex items-center justify-center gap-3">
@@ -202,7 +210,7 @@ export default function PuzzlesPage() {
                       >
                         {currentPuzzle.difficulty}
                       </span>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-foreground-muted font-serif">
                         {categoryDescriptions[currentPuzzle.category]}
                       </span>
                     </div>
@@ -219,20 +227,20 @@ export default function PuzzlesPage() {
                   />
 
                   {/* Hint and next */}
-                  <div className="flex gap-3 mt-6">
+                  <div className="flex gap-3 mt-5">
                     {currentPuzzle.hint && (
                       <button
                         onClick={() => setShowHint(!showHint)}
-                        className="px-4 py-2 rounded-lg bg-zinc-800/60 hover:bg-zinc-700/60 text-sm transition-colors border border-zinc-700/50"
+                        className="px-4 py-2 rounded-md bg-background-secondary hover:bg-background-tertiary text-sm transition-colors border border-border text-foreground-secondary hover:text-foreground"
                       >
                         {showHint ? 'Hide Hint' : 'Show Hint'}
                       </button>
                     )}
                     <button
                       onClick={nextPuzzle}
-                      className="px-4 py-2 rounded-lg bg-zinc-800/60 hover:bg-zinc-700/60 text-sm transition-colors border border-zinc-700/50"
+                      className="px-4 py-2 rounded-md bg-background-secondary hover:bg-background-tertiary text-sm transition-colors border border-border text-foreground-secondary hover:text-foreground"
                     >
-                      Next Puzzle →
+                      Next Puzzle
                     </button>
                   </div>
 
@@ -243,7 +251,7 @@ export default function PuzzlesPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="mt-4 px-4 py-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300/80 text-sm"
+                        className="mt-4 px-4 py-3 rounded-md bg-accent-gold/10 border border-accent-gold/20 text-accent-gold text-sm font-serif italic"
                       >
                         {currentPuzzle.hint}
                       </motion.div>
@@ -254,20 +262,17 @@ export default function PuzzlesPage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex flex-col items-center justify-center h-96 text-center"
+                  className="flex flex-col items-center justify-center h-80 text-center"
                 >
-                  <div className="text-6xl mb-4 opacity-20">
-                    {categoryIcons['life-death']}
-                  </div>
-                  <h2 className="text-xl font-medium text-zinc-400 mb-2">
+                  <h2 className="text-xl font-serif font-medium text-foreground-secondary mb-2">
                     Select a Puzzle
                   </h2>
-                  <p className="text-sm text-zinc-600 mb-6">
+                  <p className="text-sm text-foreground-muted font-serif italic mb-6">
                     Choose from the list or try a random puzzle
                   </p>
                   <button
                     onClick={() => selectRandom()}
-                    className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 font-medium transition-colors"
+                    className="px-6 py-3 rounded-md bg-accent-gold/20 hover:bg-accent-gold/30 text-accent-gold font-medium transition-colors border border-accent-gold/30"
                   >
                     Start Random Puzzle
                   </button>
@@ -289,18 +294,21 @@ interface FilterButtonProps {
 }
 
 function FilterButton({ active, onClick, children, color }: FilterButtonProps) {
+  const { theme } = useTheme();
   const colorClass = color && active ? difficultyColors[color] : '';
 
   return (
     <button
       onClick={onClick}
-      className={`px-2.5 py-1.5 rounded text-xs font-medium transition-all ${
+      className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
         active
           ? color
             ? colorClass
-            : 'bg-white text-black'
-          : 'bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60'
-      } border ${active && !color ? 'border-transparent' : 'border-zinc-700/30'}`}
+            : theme === 'dark'
+            ? 'bg-accent-gold/20 text-accent-gold border-accent-gold/30'
+            : 'bg-accent/10 text-accent border-accent/30'
+          : 'bg-background-tertiary/50 text-foreground-muted hover:bg-background-tertiary'
+      } border ${active && !color ? '' : 'border-border/50'}`}
     >
       {children}
     </button>

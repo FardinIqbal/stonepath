@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { GameState, Stone } from '@/lib/go-engine';
 import type { GameMode, AIStrength } from '@/hooks/useGoGame';
+import { useTheme } from '@/lib/theme';
 
 interface GameInfoProps {
   gameState: GameState;
@@ -33,11 +34,12 @@ export function GameInfo({
   onModeChange,
   onStrengthChange,
 }: GameInfoProps) {
+  const { theme } = useTheme();
   const currentSize = gameState.board.length as 9 | 13 | 19;
   const isPlayerTurn = !isAIThinking && !gameState.gameOver;
 
   return (
-    <div className="flex flex-col gap-5 w-full max-w-[280px]">
+    <div className="flex flex-col gap-4 w-full max-w-[280px]">
       {/* Player Cards */}
       <div className="flex gap-3">
         <PlayerCard
@@ -65,18 +67,14 @@ export function GameInfo({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="py-4 px-5 rounded-xl text-center"
-            style={{
-              background: 'linear-gradient(135deg, rgba(212, 165, 90, 0.15) 0%, rgba(180, 140, 80, 0.1) 100%)',
-              border: '1px solid rgba(212, 165, 90, 0.3)',
-            }}
+            className="py-3 px-4 rounded-lg text-center bg-background-secondary border border-border"
           >
-            <div className="text-lg font-semibold text-amber-200/90">
+            <div className="text-base font-serif font-semibold text-accent-gold">
               {gameState.winner === 'tie'
                 ? 'Draw'
                 : `${gameState.winner === 'black' ? 'Black' : 'White'} Wins`}
             </div>
-            <div className="text-xs text-zinc-400 mt-1">
+            <div className="text-xs text-foreground-muted mt-1 font-serif">
               {score.black.toFixed(1)} - {score.white.toFixed(1)}
             </div>
           </motion.div>
@@ -88,33 +86,33 @@ export function GameInfo({
         <button
           onClick={onPass}
           disabled={!isPlayerTurn}
-          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-            bg-zinc-800/60 hover:bg-zinc-700/60 disabled:opacity-40 disabled:cursor-not-allowed
-            border border-zinc-700/50 hover:border-zinc-600/50"
+          className="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200
+            bg-background-secondary hover:bg-background-tertiary disabled:opacity-40 disabled:cursor-not-allowed
+            border border-border text-foreground-secondary hover:text-foreground"
         >
           Pass
         </button>
         <button
           onClick={onUndo}
           disabled={gameState.moveHistory.length === 0 || isAIThinking}
-          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-            bg-zinc-800/60 hover:bg-zinc-700/60 disabled:opacity-40 disabled:cursor-not-allowed
-            border border-zinc-700/50 hover:border-zinc-600/50"
+          className="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200
+            bg-background-secondary hover:bg-background-tertiary disabled:opacity-40 disabled:cursor-not-allowed
+            border border-border text-foreground-secondary hover:text-foreground"
         >
           Undo
         </button>
         <button
           onClick={onReset}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-            bg-zinc-800/60 hover:bg-zinc-700/60
-            border border-zinc-700/50 hover:border-zinc-600/50"
+          className="px-3 py-2 rounded-md text-sm font-medium transition-all duration-200
+            bg-background-secondary hover:bg-background-tertiary
+            border border-border text-foreground-secondary hover:text-foreground"
         >
           Reset
         </button>
       </div>
 
       {/* Settings Section */}
-      <div className="space-y-4 pt-2">
+      <div className="space-y-3 pt-1">
         {/* Game Mode */}
         <SettingSection title="Mode">
           <div className="flex gap-1.5">
@@ -170,7 +168,7 @@ export function GameInfo({
               <KataNetStatus status={kataNetStatus} />
             )}
             {currentSize !== 19 && strength !== 'katanet' && (
-              <p className="text-xs text-zinc-500 mt-2">
+              <p className="text-xs text-foreground-muted mt-2 font-serif italic">
                 KataNet requires 19x19
               </p>
             )}
@@ -194,7 +192,7 @@ export function GameInfo({
       </div>
 
       {/* Move count */}
-      <div className="text-center text-xs text-zinc-600 pt-2">
+      <div className="text-center text-xs text-foreground-muted pt-1 font-serif italic">
         Move {gameState.moveHistory.length}
       </div>
     </div>
@@ -211,42 +209,46 @@ interface PlayerCardProps {
 }
 
 function PlayerCard({ color, captures, score, isCurrentTurn, isWinner, isThinking }: PlayerCardProps) {
+  const { theme } = useTheme();
   const isBlack = color === 'black';
 
   return (
     <motion.div
       animate={isWinner ? { scale: [1, 1.02, 1] } : {}}
       transition={{ repeat: Infinity, duration: 2 }}
-      className={`flex-1 py-4 px-4 rounded-xl transition-all duration-300 ${
+      className={`flex-1 py-3 px-3 rounded-lg transition-all duration-300 ${
         isCurrentTurn
-          ? 'bg-zinc-800/80 border-zinc-600/50'
-          : 'bg-zinc-900/40 border-zinc-800/30'
+          ? 'bg-background-secondary border-accent-gold/30'
+          : 'bg-background-tertiary/50 border-border/50'
       } border`}
       style={{
-        boxShadow: isWinner ? '0 0 20px rgba(212, 165, 90, 0.2)' : undefined,
+        boxShadow: isWinner ? '0 0 20px rgba(212, 175, 55, 0.15)' : undefined,
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Stone indicator */}
         <div className="relative">
           <motion.div
             animate={isThinking ? { scale: [1, 1.1, 1] } : isCurrentTurn ? { scale: [1, 1.05, 1] } : {}}
             transition={{ repeat: Infinity, duration: isThinking ? 0.6 : 2 }}
-            className="w-8 h-8 rounded-full"
+            className="w-7 h-7 rounded-full"
             style={{
               background: isBlack
                 ? 'radial-gradient(ellipse at 35% 25%, rgba(80, 80, 85, 1) 0%, rgba(15, 15, 18, 1) 60%, rgba(5, 5, 8, 1) 100%)'
                 : 'radial-gradient(ellipse at 35% 25%, rgba(255, 255, 255, 1) 0%, rgba(230, 228, 220, 1) 60%, rgba(210, 205, 195, 1) 100%)',
               boxShadow: isBlack
                 ? '1px 2px 4px rgba(0, 0, 0, 0.5)'
-                : '1px 2px 4px rgba(0, 0, 0, 0.2)',
+                : '1px 2px 4px rgba(0, 0, 0, 0.15)',
+              border: isBlack
+                ? '1px solid rgba(80, 80, 80, 0.3)'
+                : '1px solid rgba(200, 200, 200, 0.5)',
             }}
           />
           {isWinner && (
             <div
-              className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+              className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
               style={{
-                background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
               }}
             />
           )}
@@ -254,10 +256,10 @@ function PlayerCard({ color, captures, score, isCurrentTurn, isWinner, isThinkin
 
         {/* Score info */}
         <div className="flex-1">
-          <div className={`text-lg font-semibold tabular-nums ${isCurrentTurn ? 'text-white' : 'text-zinc-400'}`}>
+          <div className={`text-base font-semibold tabular-nums ${isCurrentTurn ? 'text-foreground' : 'text-foreground-secondary'}`}>
             {score.toFixed(1)}
           </div>
-          <div className="text-[10px] text-zinc-500 uppercase tracking-wider">
+          <div className="text-[10px] text-foreground-muted uppercase tracking-wider font-serif">
             {captures} captured
           </div>
         </div>
@@ -274,7 +276,7 @@ function PlayerCard({ color, captures, score, isCurrentTurn, isWinner, isThinkin
                   duration: 0.6,
                   delay: i * 0.15,
                 }}
-                className="w-1.5 h-1.5 bg-amber-500 rounded-full"
+                className="w-1.5 h-1.5 bg-accent-gold rounded-full"
               />
             ))}
           </div>
@@ -292,7 +294,7 @@ interface SettingSectionProps {
 function SettingSection({ title, children }: SettingSectionProps) {
   return (
     <div>
-      <div className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-2">
+      <div className="text-[10px] font-serif text-foreground-muted uppercase tracking-wider mb-1.5">
         {title}
       </div>
       {children}
@@ -309,24 +311,30 @@ interface ToggleButtonProps {
 }
 
 function ToggleButton({ active, onClick, disabled, color = 'default', children }: ToggleButtonProps) {
+  const { theme } = useTheme();
+
   const colorStyles = {
-    default: active ? 'bg-white text-black' : '',
-    green: active ? 'bg-emerald-600 text-white' : '',
-    amber: active ? 'bg-amber-600 text-white' : '',
-    rose: active ? 'bg-rose-600 text-white' : '',
+    default: active
+      ? theme === 'dark'
+        ? 'bg-accent-gold/20 text-accent-gold border-accent-gold/30'
+        : 'bg-accent/10 text-accent border-accent/30'
+      : '',
+    green: active ? 'bg-emerald-600/20 text-emerald-500 border-emerald-500/30' : '',
+    amber: active ? 'bg-amber-600/20 text-amber-500 border-amber-500/30' : '',
+    rose: active ? 'bg-rose-600/20 text-rose-500 border-rose-500/30' : '',
   };
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
+      className={`flex-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200
         ${active
           ? colorStyles[color]
-          : 'bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-300'
+          : 'bg-background-tertiary/50 text-foreground-muted hover:bg-background-tertiary hover:text-foreground-secondary'
         }
         ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
-        border border-transparent ${active ? '' : 'border-zinc-700/30'}
+        border ${active ? '' : 'border-border/50'}
       `}
     >
       {children}
@@ -345,9 +353,9 @@ function KataNetStatus({ status }: KataNetStatusProps) {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-3 h-3 border-2 border-blue-500/30 border-t-blue-500 rounded-full"
+          className="w-3 h-3 border-2 border-accent-gold/30 border-t-accent-gold rounded-full"
         />
-        <span className="text-xs text-blue-400">Loading KataNet...</span>
+        <span className="text-xs text-accent-gold font-serif italic">Loading KataNet...</span>
       </div>
     );
   }
@@ -356,7 +364,7 @@ function KataNetStatus({ status }: KataNetStatusProps) {
     return (
       <div className="flex items-center gap-2 mt-2">
         <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-        <span className="text-xs text-emerald-400">KataNet ready (~2 dan)</span>
+        <span className="text-xs text-emerald-500 font-serif italic">KataNet ready (~2 dan)</span>
       </div>
     );
   }
@@ -365,7 +373,7 @@ function KataNetStatus({ status }: KataNetStatusProps) {
     return (
       <div className="flex items-center gap-2 mt-2">
         <div className="w-2 h-2 bg-rose-500 rounded-full" />
-        <span className="text-xs text-rose-400">Failed to load</span>
+        <span className="text-xs text-rose-500 font-serif italic">Failed to load</span>
       </div>
     );
   }

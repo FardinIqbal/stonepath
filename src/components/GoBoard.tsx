@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { GameState, Position, BoardSize, Stone } from '@/lib/go-engine';
 import { getStarPoints, isValidMove } from '@/lib/go-engine';
+import { useTheme } from '@/lib/theme';
 
 interface GoBoardProps {
   gameState: GameState;
@@ -12,25 +13,39 @@ interface GoBoardProps {
 }
 
 export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardProps) {
+  const { theme } = useTheme();
   const size = gameState.board.length;
   const starPoints = useMemo(() => getStarPoints(size as BoardSize), [size]);
   const [hoveredPos, setHoveredPos] = useState<Position | null>(null);
 
-  // Calculate cell size based on board size
+  // Mobile-first: smaller cells, responsive sizing
   const getCellSize = () => {
-    if (size === 9) return 48;
-    if (size === 13) return 38;
-    return 28; // 19x19
+    if (typeof window !== 'undefined') {
+      const screenWidth = window.innerWidth;
+      if (screenWidth < 400) {
+        // Small phones
+        if (size === 9) return 32;
+        if (size === 13) return 24;
+        return 16;
+      }
+      if (screenWidth < 768) {
+        // Mobile
+        if (size === 9) return 36;
+        if (size === 13) return 28;
+        return 18;
+      }
+    }
+    // Desktop
+    if (size === 9) return 44;
+    if (size === 13) return 34;
+    return 26;
   };
 
   const cellSize = getCellSize();
-  const stoneSize = cellSize * 0.88;
-  const boardPadding = cellSize * 1.2;
+  const stoneSize = cellSize * 0.9;
+  const boardPadding = cellSize * 0.8;
   const gridSize = cellSize * (size - 1);
   const boardWidth = gridSize + boardPadding * 2;
-
-  // Column labels (A-T, skipping I)
-  const colLabels = 'ABCDEFGHJKLMNOPQRST'.slice(0, size).split('');
 
   const handleIntersectionClick = (x: number, y: number) => {
     if (disabled || gameState.gameOver) return;
@@ -40,65 +55,39 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
     }
   };
 
+  // Theme-aware colors
+  const colors = theme === 'dark' ? {
+    board: '#1E3A2F',
+    boardGradient: 'linear-gradient(145deg, #243D32 0%, #1A332A 100%)',
+    lines: '#C9A962',
+    linesOpacity: 0.7,
+    starPoints: '#D4AF37',
+    shadow: 'rgba(0, 0, 0, 0.4)',
+  } : {
+    board: '#D4B896',
+    boardGradient: 'linear-gradient(145deg, #DCC4A0 0%, #CCAB88 100%)',
+    lines: '#6B4423',
+    linesOpacity: 0.8,
+    starPoints: '#5C4033',
+    shadow: 'rgba(0, 0, 0, 0.15)',
+  };
+
   return (
-    <div className="relative select-none">
+    <div className="relative select-none no-select">
       {/* Board container */}
       <div
-        className="relative rounded-2xl"
+        className="relative rounded-lg"
         style={{
           width: boardWidth,
           height: boardWidth,
-          background: 'linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%)',
+          background: colors.boardGradient,
           boxShadow: `
-            0 0 0 1px rgba(255, 255, 255, 0.03),
-            0 20px 50px -10px rgba(0, 0, 0, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.02)
+            0 4px 6px ${colors.shadow},
+            0 10px 20px ${colors.shadow},
+            inset 0 1px 0 rgba(255, 255, 255, 0.1)
           `,
         }}
       >
-        {/* Subtle inner glow */}
-        <div
-          className="absolute inset-4 rounded-xl pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.01) 0%, transparent 70%)',
-          }}
-        />
-
-        {/* Coordinate labels - columns */}
-        {colLabels.map((label, i) => (
-          <div
-            key={`col-top-${i}`}
-            className="absolute text-[9px] font-medium"
-            style={{
-              left: boardPadding + i * cellSize,
-              top: 10,
-              transform: 'translateX(-50%)',
-              color: 'rgba(255, 255, 255, 0.2)',
-              fontFamily: 'system-ui',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {label}
-          </div>
-        ))}
-
-        {/* Coordinate labels - rows */}
-        {Array.from({ length: size }).map((_, i) => (
-          <div
-            key={`row-${i}`}
-            className="absolute text-[9px] font-medium"
-            style={{
-              left: 12,
-              top: boardPadding + i * cellSize,
-              transform: 'translateY(-50%)',
-              color: 'rgba(255, 255, 255, 0.2)',
-              fontFamily: 'system-ui',
-            }}
-          >
-            {size - i}
-          </div>
-        ))}
-
         {/* Grid lines SVG */}
         <svg
           width={boardWidth}
@@ -114,8 +103,9 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
                 y1={boardPadding}
                 x2={boardPadding + i * cellSize}
                 y2={boardPadding + gridSize}
-                stroke="rgba(255, 255, 255, 0.12)"
-                strokeWidth={i === 0 || i === size - 1 ? 1 : 0.5}
+                stroke={colors.lines}
+                strokeWidth={i === 0 || i === size - 1 ? 1.5 : 0.75}
+                strokeOpacity={colors.linesOpacity}
               />
               {/* Horizontal lines */}
               <line
@@ -123,8 +113,9 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
                 y1={boardPadding + i * cellSize}
                 x2={boardPadding + gridSize}
                 y2={boardPadding + i * cellSize}
-                stroke="rgba(255, 255, 255, 0.12)"
-                strokeWidth={i === 0 || i === size - 1 ? 1 : 0.5}
+                stroke={colors.lines}
+                strokeWidth={i === 0 || i === size - 1 ? 1.5 : 0.75}
+                strokeOpacity={colors.linesOpacity}
               />
             </g>
           ))}
@@ -135,8 +126,9 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
               key={`star-${i}`}
               cx={boardPadding + point.x * cellSize}
               cy={boardPadding + point.y * cellSize}
-              r={size === 19 ? 2.5 : 3}
-              fill="rgba(255, 255, 255, 0.25)"
+              r={size === 19 ? 3 : 3.5}
+              fill={colors.starPoints}
+              opacity={0.9}
             />
           ))}
         </svg>
@@ -152,7 +144,7 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
             return (
               <div
                 key={`${x}-${y}`}
-                className="absolute"
+                className="absolute tap-target"
                 style={{
                   left: boardPadding + x * cellSize - cellSize / 2,
                   top: boardPadding + y * cellSize - cellSize / 2,
@@ -161,6 +153,10 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
                   cursor: canPlay ? 'pointer' : 'default',
                 }}
                 onClick={() => handleIntersectionClick(x, y)}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handleIntersectionClick(x, y);
+                }}
                 onMouseEnter={() => canPlay && setHoveredPos({ x, y })}
                 onMouseLeave={() => setHoveredPos(null)}
               >
@@ -169,7 +165,7 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
                   {canPlay && !stone && isHovered && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      animate={{ opacity: 0.4, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.1 }}
                       className="absolute rounded-full pointer-events-none"
@@ -180,11 +176,9 @@ export function GoBoard({ gameState, onPlaceStone, disabled = false }: GoBoardPr
                         width: stoneSize,
                         height: stoneSize,
                         background: gameState.currentPlayer === 'black'
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(255, 255, 255, 0.15)',
-                        border: gameState.currentPlayer === 'black'
-                          ? '1px solid rgba(255, 255, 255, 0.1)'
-                          : '1px solid rgba(255, 255, 255, 0.25)',
+                          ? 'radial-gradient(circle at 30% 30%, #444 0%, #111 100%)'
+                          : 'radial-gradient(circle at 30% 30%, #fff 0%, #ddd 100%)',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
                       }}
                     />
                   )}
@@ -226,7 +220,7 @@ function GoStone({ color, size, isLastMove }: GoStoneProps) {
       transition={{
         type: 'spring',
         stiffness: 500,
-        damping: 25,
+        damping: 28,
       }}
       className="absolute rounded-full"
       style={{
@@ -235,29 +229,36 @@ function GoStone({ color, size, isLastMove }: GoStoneProps) {
         transform: 'translate(-50%, -50%)',
         width: size,
         height: size,
+        // High contrast stone gradients
         background: isBlack
-          ? 'linear-gradient(145deg, #2a2a2a 0%, #0a0a0a 100%)'
-          : 'linear-gradient(145deg, #ffffff 0%, #e0e0e0 100%)',
+          ? 'radial-gradient(circle at 30% 25%, #4a4a4a 0%, #1a1a1a 40%, #050505 100%)'
+          : 'radial-gradient(circle at 30% 25%, #ffffff 0%, #f0f0f0 40%, #d8d8d8 100%)',
+        // Strong shadows for visibility
         boxShadow: isBlack
-          ? `0 2px 8px rgba(0, 0, 0, 0.5),
+          ? `0 3px 6px rgba(0, 0, 0, 0.4),
              0 1px 2px rgba(0, 0, 0, 0.3),
-             inset 0 1px 0 rgba(255, 255, 255, 0.05)`
-          : `0 2px 8px rgba(0, 0, 0, 0.2),
-             0 1px 2px rgba(0, 0, 0, 0.1),
-             inset 0 -1px 0 rgba(0, 0, 0, 0.05)`,
+             inset 0 1px 1px rgba(255, 255, 255, 0.1)`
+          : `0 3px 6px rgba(0, 0, 0, 0.25),
+             0 1px 2px rgba(0, 0, 0, 0.15),
+             inset 0 -1px 1px rgba(0, 0, 0, 0.05),
+             inset 0 1px 1px rgba(255, 255, 255, 0.9)`,
+        // Border for extra visibility
+        border: isBlack
+          ? '1px solid rgba(80, 80, 80, 0.3)'
+          : '1px solid rgba(200, 200, 200, 0.5)',
       }}
     >
-      {/* Subtle highlight */}
+      {/* Highlight */}
       <div
         className="absolute rounded-full"
         style={{
-          left: '15%',
-          top: '12%',
-          width: '30%',
-          height: '25%',
+          left: '18%',
+          top: '15%',
+          width: '28%',
+          height: '22%',
           background: isBlack
-            ? 'radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%)'
-            : 'radial-gradient(ellipse, rgba(255,255,255,0.6) 0%, transparent 70%)',
+            ? 'radial-gradient(ellipse, rgba(255,255,255,0.15) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse, rgba(255,255,255,0.8) 0%, transparent 70%)',
         }}
       />
 
@@ -272,12 +273,12 @@ function GoStone({ color, size, isLastMove }: GoStoneProps) {
             left: '50%',
             top: '50%',
             transform: 'translate(-50%, -50%)',
-            width: size * 0.28,
-            height: size * 0.28,
+            width: size * 0.3,
+            height: size * 0.3,
             borderRadius: '2px',
             background: isBlack
-              ? 'rgba(255, 255, 255, 0.6)'
-              : 'rgba(0, 0, 0, 0.5)',
+              ? 'rgba(255, 255, 255, 0.8)'
+              : 'rgba(0, 0, 0, 0.7)',
           }}
         />
       )}

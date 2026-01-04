@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Light theme - Warm cream/parchment */
+:root,
+.light {
+  --background: #F5F0E8;
+  --background-secondary: #EDE6DA;
+  --background-tertiary: #E5DDCE;
+  --foreground: #2C1810;
+  --foreground-secondary: #5C4033;
+  --foreground-muted: #8B7355;
+  --board: #D4B896;
+  --board-lines: #6B4423;
+  --board-accent: #8B6914;
+  --accent: #722F37;
+  --accent-gold: #B8860B;
+  --border: #C9B896;
+  --card: #FDFBF7;
+}
+
+/* Dark theme - Forest green study */
+.dark {
+  --background: #0F1A14;
+  --background-secondary: #162118;
+  --background-tertiary: #1D2B22;
+  --foreground: #F5F0E8;
+  --foreground-secondary: #C9B896;
+  --foreground-muted: #7A6B5A;
+  --board: #1E3A2F;
+  --board-lines: #C9A962;
+  --board-accent: #D4AF37;
+  --accent: #D4AF37;
+  --accent-gold: #C9A962;
+  --border: #2D4A3A;
+  --card: #152019;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-board: var(--board);
+  --color-board-lines: var(--board-lines);
+  --color-board-accent: var(--board-accent);
+  --color-accent: var(--accent);
+  --color-accent-gold: var(--accent-gold);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Prevent text selection on game elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Touch-friendly tap targets */
+@media (pointer: coarse) {
+  .tap-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but allow scroll */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
