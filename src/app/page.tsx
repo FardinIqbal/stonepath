@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { GoBoard } from '@/components/GoBoard';
 import { GameInfo } from '@/components/GameInfo';
 import { useGoGame } from '@/hooks/useGoGame';
@@ -49,6 +50,24 @@ export default function Home() {
           >
             Master the ancient game of Go
           </motion.p>
+
+          {/* Navigation */}
+          <motion.nav
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex justify-center gap-6 mt-4"
+          >
+            <span className="text-sm text-white border-b border-white/20 pb-1">
+              Play
+            </span>
+            <Link
+              href="/puzzles"
+              className="text-sm text-zinc-500 hover:text-white transition-colors pb-1"
+            >
+              Puzzles
+            </Link>
+          </motion.nav>
         </motion.header>
 
         {/* Game area */}
