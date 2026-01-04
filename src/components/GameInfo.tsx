@@ -37,301 +37,338 @@ export function GameInfo({
   const isPlayerTurn = !isAIThinking && !gameState.gameOver;
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-xs">
-      {/* Game Mode Selector */}
-      <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
-        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-          Game Mode
-        </h3>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            onClick={() => onModeChange('local')}
-            className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-              mode === 'local'
-                ? 'bg-white text-black'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-            }`}
-          >
-            2 Player
-          </button>
-          <button
-            onClick={() => onModeChange('ai-white')}
-            className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-              mode === 'ai-white'
-                ? 'bg-white text-black'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-            }`}
-          >
-            vs AI
-          </button>
-          <button
-            onClick={() => onModeChange('ai-black')}
-            className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-              mode === 'ai-black'
-                ? 'bg-white text-black'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-            }`}
-          >
-            AI First
-          </button>
-        </div>
-        {mode !== 'local' && (
-          <p className="text-xs text-zinc-500 mt-2">
-            {mode === 'ai-white' ? 'You play Black (first)' : 'AI plays Black (first)'}
-          </p>
-        )}
-      </div>
-
-      {/* AI Strength Selector (only when playing vs AI) */}
-      {mode !== 'local' && (
-        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
-          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-            AI Strength
-          </h3>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => onStrengthChange('beginner')}
-              className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-                strength === 'beginner'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-              }`}
-            >
-              Easy
-            </button>
-            <button
-              onClick={() => onStrengthChange('intermediate')}
-              className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-                strength === 'intermediate'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-              }`}
-            >
-              Medium
-            </button>
-            <button
-              onClick={() => onStrengthChange('katanet')}
-              disabled={currentSize !== 19}
-              className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
-                strength === 'katanet'
-                  ? 'bg-red-600 text-white'
-                  : currentSize !== 19
-                  ? 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-              }`}
-            >
-              KataNet
-            </button>
-          </div>
-          {strength === 'katanet' && (
-            <div className="mt-2">
-              {kataNetStatus === 'loading' && (
-                <p className="text-xs text-blue-400 flex items-center gap-2">
-                  <span className="animate-spin">...</span>
-                  Loading neural network (~12MB)
-                </p>
-              )}
-              {kataNetStatus === 'ready' && (
-                <p className="text-xs text-green-400">KataNet ready (~2 dan)</p>
-              )}
-              {kataNetStatus === 'error' && (
-                <p className="text-xs text-red-400">Failed to load KataNet</p>
-              )}
-            </div>
-          )}
-          {currentSize !== 19 && strength !== 'katanet' && (
-            <p className="text-xs text-zinc-500 mt-2">
-              KataNet requires 19x19 board
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Current turn indicator */}
-      <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
-        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-          {isAIThinking ? 'AI Thinking...' : 'Current Turn'}
-        </h3>
-        <div className="flex items-center gap-3">
-          <motion.div
-            animate={
-              isAIThinking
-                ? { scale: [1, 1.1, 1], opacity: [1, 0.7, 1] }
-                : { scale: [1, 1.05, 1] }
-            }
-            transition={{
-              repeat: Infinity,
-              duration: isAIThinking ? 0.8 : 2,
-            }}
-            className="w-8 h-8 rounded-full shadow-lg"
-            style={{
-              background:
-                gameState.currentPlayer === 'black'
-                  ? 'radial-gradient(ellipse at 30% 30%, #444, #000)'
-                  : 'radial-gradient(ellipse at 30% 30%, #fff, #ddd)',
-            }}
-          />
-          <span className="text-lg font-semibold capitalize">
-            {gameState.currentPlayer}
-          </span>
-          <AnimatePresence>
-            {isAIThinking && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="ml-auto"
-              >
-                <div className="flex gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 0.8,
-                        delay: i * 0.2,
-                      }}
-                      className="w-2 h-2 bg-blue-500 rounded-full"
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {gameState.gameOver && (
-            <span className="ml-auto text-sm text-zinc-500">Game Over</span>
-          )}
-        </div>
-      </div>
-
-      {/* Score panel */}
-      <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
-        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">
-          Score
-        </h3>
-        <div className="flex justify-between items-center">
-          <PlayerScore
-            color="black"
-            captures={gameState.captures.black}
-            territory={score.black}
-            isWinner={gameState.winner === 'black'}
-          />
-          <div className="text-zinc-600 font-mono">vs</div>
-          <PlayerScore
-            color="white"
-            captures={gameState.captures.white}
-            territory={score.white}
-            isWinner={gameState.winner === 'white'}
-          />
-        </div>
+    <div className="flex flex-col gap-5 w-full max-w-[280px]">
+      {/* Player Cards */}
+      <div className="flex gap-3">
+        <PlayerCard
+          color="black"
+          captures={gameState.captures.black}
+          score={score.black}
+          isCurrentTurn={gameState.currentPlayer === 'black'}
+          isWinner={gameState.winner === 'black'}
+          isThinking={isAIThinking && gameState.currentPlayer === 'black'}
+        />
+        <PlayerCard
+          color="white"
+          captures={gameState.captures.white}
+          score={score.white}
+          isCurrentTurn={gameState.currentPlayer === 'white'}
+          isWinner={gameState.winner === 'white'}
+          isThinking={isAIThinking && gameState.currentPlayer === 'white'}
+        />
       </div>
 
       {/* Winner announcement */}
       <AnimatePresence>
         {gameState.gameOver && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-5 border border-blue-500/30"
+            className="py-4 px-5 rounded-xl text-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(212, 165, 90, 0.15) 0%, rgba(180, 140, 80, 0.1) 100%)',
+              border: '1px solid rgba(212, 165, 90, 0.3)',
+            }}
           >
-            <h3 className="text-lg font-semibold text-center">
+            <div className="text-lg font-semibold text-amber-200/90">
               {gameState.winner === 'tie'
-                ? "It's a tie!"
-                : `${gameState.winner === 'black' ? 'Black' : 'White'} wins!`}
-            </h3>
-            <p className="text-center text-sm text-zinc-400 mt-1">
+                ? 'Draw'
+                : `${gameState.winner === 'black' ? 'Black' : 'White'} Wins`}
+            </div>
+            <div className="text-xs text-zinc-400 mt-1">
               {score.black.toFixed(1)} - {score.white.toFixed(1)}
-            </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Actions */}
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
-          <button
-            onClick={onPass}
-            disabled={!isPlayerTurn}
-            className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors text-sm"
-          >
-            Pass
-          </button>
-          <button
-            onClick={onUndo}
-            disabled={gameState.moveHistory.length === 0 || isAIThinking}
-            className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors text-sm"
-          >
-            Undo
-          </button>
-        </div>
+      {/* Game Controls */}
+      <div className="flex gap-2">
+        <button
+          onClick={onPass}
+          disabled={!isPlayerTurn}
+          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+            bg-zinc-800/60 hover:bg-zinc-700/60 disabled:opacity-40 disabled:cursor-not-allowed
+            border border-zinc-700/50 hover:border-zinc-600/50"
+        >
+          Pass
+        </button>
+        <button
+          onClick={onUndo}
+          disabled={gameState.moveHistory.length === 0 || isAIThinking}
+          className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+            bg-zinc-800/60 hover:bg-zinc-700/60 disabled:opacity-40 disabled:cursor-not-allowed
+            border border-zinc-700/50 hover:border-zinc-600/50"
+        >
+          Undo
+        </button>
         <button
           onClick={onReset}
-          className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors text-sm"
+          className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+            bg-zinc-800/60 hover:bg-zinc-700/60
+            border border-zinc-700/50 hover:border-zinc-600/50"
         >
-          Reset Game
+          Reset
         </button>
       </div>
 
-      {/* Board size selector */}
-      <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
-        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-          Board Size
-        </h3>
-        <div className="flex gap-2">
-          {([9, 13, 19] as const).map((size) => (
-            <button
-              key={size}
-              onClick={() => onNewGame(size)}
-              className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-all ${
-                currentSize === size
-                  ? 'bg-white text-black'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-              }`}
+      {/* Settings Section */}
+      <div className="space-y-4 pt-2">
+        {/* Game Mode */}
+        <SettingSection title="Mode">
+          <div className="flex gap-1.5">
+            <ToggleButton
+              active={mode === 'local'}
+              onClick={() => onModeChange('local')}
             >
-              {size}x{size}
-            </button>
-          ))}
-        </div>
+              2P
+            </ToggleButton>
+            <ToggleButton
+              active={mode === 'ai-white'}
+              onClick={() => onModeChange('ai-white')}
+            >
+              vs AI
+            </ToggleButton>
+            <ToggleButton
+              active={mode === 'ai-black'}
+              onClick={() => onModeChange('ai-black')}
+            >
+              AI First
+            </ToggleButton>
+          </div>
+        </SettingSection>
+
+        {/* AI Strength - only when vs AI */}
+        {mode !== 'local' && (
+          <SettingSection title="AI Level">
+            <div className="flex gap-1.5">
+              <ToggleButton
+                active={strength === 'beginner'}
+                onClick={() => onStrengthChange('beginner')}
+                color="green"
+              >
+                Easy
+              </ToggleButton>
+              <ToggleButton
+                active={strength === 'intermediate'}
+                onClick={() => onStrengthChange('intermediate')}
+                color="amber"
+              >
+                Medium
+              </ToggleButton>
+              <ToggleButton
+                active={strength === 'katanet'}
+                onClick={() => onStrengthChange('katanet')}
+                disabled={currentSize !== 19}
+                color="rose"
+              >
+                KataNet
+              </ToggleButton>
+            </div>
+            {strength === 'katanet' && (
+              <KataNetStatus status={kataNetStatus} />
+            )}
+            {currentSize !== 19 && strength !== 'katanet' && (
+              <p className="text-xs text-zinc-500 mt-2">
+                KataNet requires 19x19
+              </p>
+            )}
+          </SettingSection>
+        )}
+
+        {/* Board Size */}
+        <SettingSection title="Board">
+          <div className="flex gap-1.5">
+            {([9, 13, 19] as const).map((size) => (
+              <ToggleButton
+                key={size}
+                active={currentSize === size}
+                onClick={() => onNewGame(size)}
+              >
+                {size}x{size}
+              </ToggleButton>
+            ))}
+          </div>
+        </SettingSection>
       </div>
 
       {/* Move count */}
-      <div className="text-center text-xs text-zinc-600">
+      <div className="text-center text-xs text-zinc-600 pt-2">
         Move {gameState.moveHistory.length}
       </div>
     </div>
   );
 }
 
-interface PlayerScoreProps {
+interface PlayerCardProps {
   color: Stone;
   captures: number;
-  territory: number;
+  score: number;
+  isCurrentTurn: boolean;
   isWinner: boolean;
+  isThinking: boolean;
 }
 
-function PlayerScore({ color, captures, territory, isWinner }: PlayerScoreProps) {
+function PlayerCard({ color, captures, score, isCurrentTurn, isWinner, isThinking }: PlayerCardProps) {
   const isBlack = color === 'black';
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <motion.div
-        animate={isWinner ? { scale: [1, 1.1, 1] } : {}}
-        transition={{ repeat: Infinity, duration: 1 }}
-        className={`w-6 h-6 rounded-full shadow-md ${
-          isWinner ? 'ring-2 ring-yellow-400' : ''
-        }`}
-        style={{
-          background: isBlack
-            ? 'radial-gradient(ellipse at 30% 30%, #444, #000)'
-            : 'radial-gradient(ellipse at 30% 30%, #fff, #ddd)',
-        }}
-      />
-      <div className="text-center">
-        <div className="text-2xl font-bold">{territory.toFixed(1)}</div>
-        <div className="text-xs text-zinc-500">{captures} captures</div>
+    <motion.div
+      animate={isWinner ? { scale: [1, 1.02, 1] } : {}}
+      transition={{ repeat: Infinity, duration: 2 }}
+      className={`flex-1 py-4 px-4 rounded-xl transition-all duration-300 ${
+        isCurrentTurn
+          ? 'bg-zinc-800/80 border-zinc-600/50'
+          : 'bg-zinc-900/40 border-zinc-800/30'
+      } border`}
+      style={{
+        boxShadow: isWinner ? '0 0 20px rgba(212, 165, 90, 0.2)' : undefined,
+      }}
+    >
+      <div className="flex items-center gap-3">
+        {/* Stone indicator */}
+        <div className="relative">
+          <motion.div
+            animate={isThinking ? { scale: [1, 1.1, 1] } : isCurrentTurn ? { scale: [1, 1.05, 1] } : {}}
+            transition={{ repeat: Infinity, duration: isThinking ? 0.6 : 2 }}
+            className="w-8 h-8 rounded-full"
+            style={{
+              background: isBlack
+                ? 'radial-gradient(ellipse at 35% 25%, rgba(80, 80, 85, 1) 0%, rgba(15, 15, 18, 1) 60%, rgba(5, 5, 8, 1) 100%)'
+                : 'radial-gradient(ellipse at 35% 25%, rgba(255, 255, 255, 1) 0%, rgba(230, 228, 220, 1) 60%, rgba(210, 205, 195, 1) 100%)',
+              boxShadow: isBlack
+                ? '1px 2px 4px rgba(0, 0, 0, 0.5)'
+                : '1px 2px 4px rgba(0, 0, 0, 0.2)',
+            }}
+          />
+          {isWinner && (
+            <div
+              className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+              }}
+            />
+          )}
+        </div>
+
+        {/* Score info */}
+        <div className="flex-1">
+          <div className={`text-lg font-semibold tabular-nums ${isCurrentTurn ? 'text-white' : 'text-zinc-400'}`}>
+            {score.toFixed(1)}
+          </div>
+          <div className="text-[10px] text-zinc-500 uppercase tracking-wider">
+            {captures} captured
+          </div>
+        </div>
+
+        {/* Thinking indicator */}
+        {isThinking && (
+          <div className="flex gap-0.5">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 0.6,
+                  delay: i * 0.15,
+                }}
+                className="w-1.5 h-1.5 bg-amber-500 rounded-full"
+              />
+            ))}
+          </div>
+        )}
       </div>
+    </motion.div>
+  );
+}
+
+interface SettingSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function SettingSection({ title, children }: SettingSectionProps) {
+  return (
+    <div>
+      <div className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-2">
+        {title}
+      </div>
+      {children}
     </div>
   );
+}
+
+interface ToggleButtonProps {
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  color?: 'default' | 'green' | 'amber' | 'rose';
+  children: React.ReactNode;
+}
+
+function ToggleButton({ active, onClick, disabled, color = 'default', children }: ToggleButtonProps) {
+  const colorStyles = {
+    default: active ? 'bg-white text-black' : '',
+    green: active ? 'bg-emerald-600 text-white' : '',
+    amber: active ? 'bg-amber-600 text-white' : '',
+    rose: active ? 'bg-rose-600 text-white' : '',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
+        ${active
+          ? colorStyles[color]
+          : 'bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-300'
+        }
+        ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
+        border border-transparent ${active ? '' : 'border-zinc-700/30'}
+      `}
+    >
+      {children}
+    </button>
+  );
+}
+
+interface KataNetStatusProps {
+  status: 'not-loaded' | 'loading' | 'ready' | 'error';
+}
+
+function KataNetStatus({ status }: KataNetStatusProps) {
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center gap-2 mt-2">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+          className="w-3 h-3 border-2 border-blue-500/30 border-t-blue-500 rounded-full"
+        />
+        <span className="text-xs text-blue-400">Loading KataNet...</span>
+      </div>
+    );
+  }
+
+  if (status === 'ready') {
+    return (
+      <div className="flex items-center gap-2 mt-2">
+        <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+        <span className="text-xs text-emerald-400">KataNet ready (~2 dan)</span>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="flex items-center gap-2 mt-2">
+        <div className="w-2 h-2 bg-rose-500 rounded-full" />
+        <span className="text-xs text-rose-400">Failed to load</span>
+      </div>
+    );
+  }
+
+  return null;
 }

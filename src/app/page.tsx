@@ -23,34 +23,40 @@ export default function Home() {
   } = useGoGame({ boardSize: 19, mode: 'local' });
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Subtle grid background */}
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
+    <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
+      {/* Subtle ambient glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-900/5 via-transparent to-transparent blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-[600px] h-[400px] bg-gradient-to-t from-zinc-800/10 via-transparent to-transparent blur-3xl" />
+      </div>
 
-      {/* Gradient accent */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-blue-500/10 via-purple-500/5 to-transparent blur-3xl pointer-events-none" />
-
-      <main className="relative flex flex-col items-center justify-center min-h-screen p-8">
+      <main className="relative flex flex-col items-center min-h-screen px-4 py-8 md:py-12">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center mb-8 md:mb-12"
         >
-          <h1 className="text-4xl font-bold tracking-tight mb-2">
+          <h1 className="text-3xl md:text-4xl font-light tracking-tight">
             Stone<span className="text-zinc-500">Path</span>
           </h1>
-          <p className="text-zinc-500 text-sm">
-            The ancient game of Go
-          </p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-zinc-600 text-sm mt-2 tracking-wide"
+          >
+            Master the ancient game of Go
+          </motion.p>
         </motion.header>
 
         {/* Game area */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="flex flex-col lg:flex-row items-center lg:items-start gap-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-10"
         >
           <GoBoard
             gameState={gameState}
@@ -74,15 +80,19 @@ export default function Home() {
           />
         </motion.div>
 
-        {/* Footer */}
+        {/* Footer hints */}
         <motion.footer
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-12 text-center text-xs text-zinc-600"
+          transition={{ delay: 0.4 }}
+          className="mt-10 md:mt-16 text-center space-y-1"
         >
-          <p>Click intersections to place stones. Black plays first.</p>
-          <p className="mt-1">Komi: 6.5 points for White</p>
+          <p className="text-xs text-zinc-600">
+            Click intersections to place stones
+          </p>
+          <p className="text-[10px] text-zinc-700">
+            Japanese rules | Komi 6.5
+          </p>
         </motion.footer>
       </main>
     </div>
