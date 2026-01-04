@@ -1,5 +1,5 @@
-// Go AI - Heuristic-based move selection
-// Provides reasonable play while TensorFlow.js KataGo integration is being set up
+// Go AI - Unified AI interface
+// Supports heuristic AI for all board sizes and KataNet (neural network) for 19x19
 
 import {
   GameState,

@@ -16,8 +16,11 @@ export default function Home() {
     score,
     mode,
     setMode,
+    strength,
+    setStrength,
     isAIThinking,
-  } = useGoGame({ boardSize: 9, mode: 'local' });
+    kataNetStatus,
+  } = useGoGame({ boardSize: 19, mode: 'local' });
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -59,12 +62,15 @@ export default function Home() {
             gameState={gameState}
             score={score}
             mode={mode}
+            strength={strength}
             isAIThinking={isAIThinking}
+            kataNetStatus={kataNetStatus}
             onPass={passMove}
             onUndo={undo}
             onReset={reset}
             onNewGame={newGame}
             onModeChange={setMode}
+            onStrengthChange={setStrength}
           />
         </motion.div>
 

@@ -2,30 +2,36 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { GameState, Stone } from '@/lib/go-engine';
-import type { GameMode } from '@/hooks/useGoGame';
+import type { GameMode, AIStrength } from '@/hooks/useGoGame';
 
 interface GameInfoProps {
   gameState: GameState;
   score: { black: number; white: number };
   mode: GameMode;
+  strength: AIStrength;
   isAIThinking: boolean;
+  kataNetStatus: 'not-loaded' | 'loading' | 'ready' | 'error';
   onPass: () => void;
   onUndo: () => void;
   onReset: () => void;
   onNewGame: (size: 9 | 13 | 19) => void;
   onModeChange: (mode: GameMode) => void;
+  onStrengthChange: (strength: AIStrength) => void;
 }
 
 export function GameInfo({
   gameState,
   score,
   mode,
+  strength,
   isAIThinking,
+  kataNetStatus,
   onPass,
   onUndo,
   onReset,
   onNewGame,
   onModeChange,
+  onStrengthChange,
 }: GameInfoProps) {
   const currentSize = gameState.board.length as 9 | 13 | 19;
   const isPlayerTurn = !isAIThinking && !gameState.gameOver;
@@ -75,6 +81,71 @@ export function GameInfo({
           </p>
         )}
       </div>
+
+      {/* AI Strength Selector (only when playing vs AI) */}
+      {mode !== 'local' && (
+        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
+          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+            AI Strength
+          </h3>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => onStrengthChange('beginner')}
+              className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
+                strength === 'beginner'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+              }`}
+            >
+              Easy
+            </button>
+            <button
+              onClick={() => onStrengthChange('intermediate')}
+              className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
+                strength === 'intermediate'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+              }`}
+            >
+              Medium
+            </button>
+            <button
+              onClick={() => onStrengthChange('katanet')}
+              disabled={currentSize !== 19}
+              className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
+                strength === 'katanet'
+                  ? 'bg-red-600 text-white'
+                  : currentSize !== 19
+                  ? 'bg-zinc-800/50 text-zinc-600 cursor-not-allowed'
+                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+              }`}
+            >
+              KataNet
+            </button>
+          </div>
+          {strength === 'katanet' && (
+            <div className="mt-2">
+              {kataNetStatus === 'loading' && (
+                <p className="text-xs text-blue-400 flex items-center gap-2">
+                  <span className="animate-spin">...</span>
+                  Loading neural network (~12MB)
+                </p>
+              )}
+              {kataNetStatus === 'ready' && (
+                <p className="text-xs text-green-400">KataNet ready (~2 dan)</p>
+              )}
+              {kataNetStatus === 'error' && (
+                <p className="text-xs text-red-400">Failed to load KataNet</p>
+              )}
+            </div>
+          )}
+          {currentSize !== 19 && strength !== 'katanet' && (
+            <p className="text-xs text-zinc-500 mt-2">
+              KataNet requires 19x19 board
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Current turn indicator */}
       <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">

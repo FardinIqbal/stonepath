@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   GameState,
   Position,
   BoardSize,
-  Stone,
   createGame,
   playMove,
   pass,
   undoMove,
   resetGame,
   calculateScore,
+  getBoardSize,
 } from '@/lib/go-engine';
 import { useSound } from './useSound';
 
 export type GameMode = 'local' | 'ai-black' | 'ai-white';
-export type AIStrength = 'beginner' | 'intermediate' | 'strong';
+export type AIStrength = 'beginner' | 'intermediate' | 'katanet';
 
 interface UseGoGameOptions {
   boardSize?: BoardSize;
@@ -39,8 +39,9 @@ export function useGoGame(options: UseGoGameOptions = {}) {
     createGame(boardSize)
   );
   const [currentMode, setCurrentMode] = useState<GameMode>(mode);
+  const [currentStrength, setCurrentStrength] = useState<AIStrength>(aiStrength);
   const [isAIThinking, setIsAIThinking] = useState(false);
-  const aiWorkerRef = useRef<Worker | null>(null);
+  const [kataNetStatus, setKataNetStatus] = useState<'not-loaded' | 'loading' | 'ready' | 'error'>('not-loaded');
 
   const {
     playStoneSound,
@@ -121,18 +122,57 @@ export function useGoGame(options: UseGoGameOptions = {}) {
     setCurrentMode(newMode);
   }, []);
 
-  // AI move logic (will be enhanced with TensorFlow.js later)
+  const setStrength = useCallback((strength: AIStrength) => {
+    setCurrentStrength(strength);
+  }, []);
+
+  // Load KataNet when strength is set to katanet
+  useEffect(() => {
+    if (currentStrength === 'katanet' && kataNetStatus === 'not-loaded') {
+      const loadModel = async () => {
+        setKataNetStatus('loading');
+        try {
+          const { loadKataNet } = await import('@/lib/katanet');
+          await loadKataNet();
+          setKataNetStatus('ready');
+        } catch (error) {
+          console.error('Failed to load KataNet:', error);
+          setKataNetStatus('error');
+        }
+      };
+      loadModel();
+    }
+  }, [currentStrength, kataNetStatus]);
+
+  // AI move logic
   useEffect(() => {
     if (isAITurn(gameState) && !isAIThinking) {
       setIsAIThinking(true);
 
       // Delay to make AI feel more natural
-      const delay = 300 + Math.random() * 500;
+      const delay = currentStrength === 'katanet' ? 100 : 300 + Math.random() * 500;
 
       const timer = setTimeout(async () => {
-        // Import AI dynamically to reduce initial bundle size
-        const { getAIMove } = await import('@/lib/go-ai');
-        const move = getAIMove(gameState, aiStrength);
+        let move: Position | null = null;
+
+        const size = getBoardSize(gameState);
+
+        // Use KataNet for 19x19 when available and selected
+        if (currentStrength === 'katanet' && size === 19 && kataNetStatus === 'ready') {
+          try {
+            const { getKataNetMove } = await import('@/lib/katanet');
+            move = await getKataNetMove(gameState);
+          } catch (error) {
+            console.error('KataNet move error:', error);
+          }
+        }
+
+        // Fall back to heuristic AI
+        if (!move) {
+          const { getAIMove } = await import('@/lib/go-ai');
+          const heuristicStrength = currentStrength === 'katanet' ? 'strong' : currentStrength;
+          move = getAIMove(gameState, heuristicStrength as 'beginner' | 'intermediate' | 'strong');
+        }
 
         if (move) {
           placeStone(move);
@@ -145,7 +185,7 @@ export function useGoGame(options: UseGoGameOptions = {}) {
 
       return () => clearTimeout(timer);
     }
-  }, [gameState, isAITurn, isAIThinking, aiStrength, placeStone, passMove]);
+  }, [gameState, isAITurn, isAIThinking, currentStrength, kataNetStatus, placeStone, passMove]);
 
   const score = calculateScore(gameState, komi);
 
@@ -159,7 +199,10 @@ export function useGoGame(options: UseGoGameOptions = {}) {
     score,
     mode: currentMode,
     setMode,
+    strength: currentStrength,
+    setStrength,
     isAIThinking,
     isAITurn: isAITurn(gameState),
+    kataNetStatus,
   };
 }
