@@ -14,7 +14,10 @@ export default function Home() {
     reset,
     newGame,
     score,
-  } = useGoGame({ boardSize: 19 });
+    mode,
+    setMode,
+    isAIThinking,
+  } = useGoGame({ boardSize: 9, mode: 'local' });
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -49,15 +52,19 @@ export default function Home() {
           <GoBoard
             gameState={gameState}
             onPlaceStone={placeStone}
+            disabled={isAIThinking}
           />
 
           <GameInfo
             gameState={gameState}
             score={score}
+            mode={mode}
+            isAIThinking={isAIThinking}
             onPass={passMove}
             onUndo={undo}
             onReset={reset}
             onNewGame={newGame}
+            onModeChange={setMode}
           />
         </motion.div>
 

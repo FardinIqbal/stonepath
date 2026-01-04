@@ -1,38 +1,97 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { GameState, Stone } from '@/lib/go-engine';
+import type { GameMode } from '@/hooks/useGoGame';
 
 interface GameInfoProps {
   gameState: GameState;
   score: { black: number; white: number };
+  mode: GameMode;
+  isAIThinking: boolean;
   onPass: () => void;
   onUndo: () => void;
   onReset: () => void;
   onNewGame: (size: 9 | 13 | 19) => void;
+  onModeChange: (mode: GameMode) => void;
 }
 
 export function GameInfo({
   gameState,
   score,
+  mode,
+  isAIThinking,
   onPass,
   onUndo,
   onReset,
   onNewGame,
+  onModeChange,
 }: GameInfoProps) {
   const currentSize = gameState.board.length as 9 | 13 | 19;
+  const isPlayerTurn = !isAIThinking && !gameState.gameOver;
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-xs">
+      {/* Game Mode Selector */}
+      <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
+        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
+          Game Mode
+        </h3>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => onModeChange('local')}
+            className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
+              mode === 'local'
+                ? 'bg-white text-black'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+            }`}
+          >
+            2 Player
+          </button>
+          <button
+            onClick={() => onModeChange('ai-white')}
+            className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
+              mode === 'ai-white'
+                ? 'bg-white text-black'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+            }`}
+          >
+            vs AI
+          </button>
+          <button
+            onClick={() => onModeChange('ai-black')}
+            className={`px-3 py-2 rounded-lg font-medium text-xs transition-all ${
+              mode === 'ai-black'
+                ? 'bg-white text-black'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+            }`}
+          >
+            AI First
+          </button>
+        </div>
+        {mode !== 'local' && (
+          <p className="text-xs text-zinc-500 mt-2">
+            {mode === 'ai-white' ? 'You play Black (first)' : 'AI plays Black (first)'}
+          </p>
+        )}
+      </div>
+
       {/* Current turn indicator */}
       <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl p-5 border border-zinc-800">
         <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">
-          Current Turn
+          {isAIThinking ? 'AI Thinking...' : 'Current Turn'}
         </h3>
         <div className="flex items-center gap-3">
           <motion.div
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ repeat: Infinity, duration: 2 }}
+            animate={
+              isAIThinking
+                ? { scale: [1, 1.1, 1], opacity: [1, 0.7, 1] }
+                : { scale: [1, 1.05, 1] }
+            }
+            transition={{
+              repeat: Infinity,
+              duration: isAIThinking ? 0.8 : 2,
+            }}
             className="w-8 h-8 rounded-full shadow-lg"
             style={{
               background:
@@ -44,6 +103,31 @@ export function GameInfo({
           <span className="text-lg font-semibold capitalize">
             {gameState.currentPlayer}
           </span>
+          <AnimatePresence>
+            {isAIThinking && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="ml-auto"
+              >
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 0.8,
+                        delay: i * 0.2,
+                      }}
+                      className="w-2 h-2 bg-blue-500 rounded-full"
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {gameState.gameOver && (
             <span className="ml-auto text-sm text-zinc-500">Game Over</span>
           )}
@@ -73,36 +157,39 @@ export function GameInfo({
       </div>
 
       {/* Winner announcement */}
-      {gameState.gameOver && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-5 border border-blue-500/30"
-        >
-          <h3 className="text-lg font-semibold text-center">
-            {gameState.winner === 'tie'
-              ? "It's a tie!"
-              : `${gameState.winner === 'black' ? 'Black' : 'White'} wins!`}
-          </h3>
-          <p className="text-center text-sm text-zinc-400 mt-1">
-            {score.black.toFixed(1)} - {score.white.toFixed(1)}
-          </p>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {gameState.gameOver && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-xl p-5 border border-blue-500/30"
+          >
+            <h3 className="text-lg font-semibold text-center">
+              {gameState.winner === 'tie'
+                ? "It's a tie!"
+                : `${gameState.winner === 'black' ? 'Black' : 'White'} wins!`}
+            </h3>
+            <p className="text-center text-sm text-zinc-400 mt-1">
+              {score.black.toFixed(1)} - {score.white.toFixed(1)}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Actions */}
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
           <button
             onClick={onPass}
-            disabled={gameState.gameOver}
+            disabled={!isPlayerTurn}
             className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors text-sm"
           >
             Pass
           </button>
           <button
             onClick={onUndo}
-            disabled={gameState.moveHistory.length === 0}
+            disabled={gameState.moveHistory.length === 0 || isAIThinking}
             className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors text-sm"
           >
             Undo
@@ -122,7 +209,7 @@ export function GameInfo({
           Board Size
         </h3>
         <div className="flex gap-2">
-          {([9, 13, 19] as const).map(size => (
+          {([9, 13, 19] as const).map((size) => (
             <button
               key={size}
               onClick={() => onNewGame(size)}
@@ -158,8 +245,12 @@ function PlayerScore({ color, captures, territory, isWinner }: PlayerScoreProps)
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div
-        className={`w-6 h-6 rounded-full shadow-md ${isWinner ? 'ring-2 ring-yellow-400' : ''}`}
+      <motion.div
+        animate={isWinner ? { scale: [1, 1.1, 1] } : {}}
+        transition={{ repeat: Infinity, duration: 1 }}
+        className={`w-6 h-6 rounded-full shadow-md ${
+          isWinner ? 'ring-2 ring-yellow-400' : ''
+        }`}
         style={{
           background: isBlack
             ? 'radial-gradient(ellipse at 30% 30%, #444, #000)'
