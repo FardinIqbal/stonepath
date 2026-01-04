@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Puzzle, PuzzlePosition } from '@/lib/tsumego';
 import { parsePosition, checkMove, getResponseMove, isPuzzleSolved } from '@/lib/tsumego';
 
@@ -20,47 +20,40 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
   const [lastMove, setLastMove] = useState<PuzzlePosition | null>(null);
   const [hoveredPos, setHoveredPos] = useState<PuzzlePosition | null>(null);
 
-  const cellSize = 44;
-  const stoneSize = cellSize * 0.92;
-  const boardPadding = cellSize * 0.8;
+  const cellSize = 40;
+  const stoneSize = cellSize * 0.88;
+  const boardPadding = cellSize * 0.6;
   const gridWidth = cellSize * (viewport.width - 1);
   const gridHeight = cellSize * (viewport.height - 1);
   const boardWidth = gridWidth + boardPadding * 2;
   const boardHeight = gridHeight + boardPadding * 2;
 
-  const isPlayerTurn = useMemo(() => {
-    return status === 'solving' && moveHistory.length % 2 === 0;
-  }, [status, moveHistory.length]);
+  const isPlayerTurn = status === 'solving' && moveHistory.length % 2 === 0;
 
-  const currentPlayer = useMemo(() => {
+  const currentPlayer = (() => {
     const turns = moveHistory.length;
     if (turns % 2 === 0) return playerColor;
     return playerColor === 'black' ? 'white' : 'black';
-  }, [moveHistory.length, playerColor]);
+  })();
 
   const handleClick = (x: number, y: number) => {
     if (status !== 'solving' || !isPlayerTurn) return;
     if (position[y][x] !== null) return;
 
     const move: PuzzlePosition = { x, y };
-
-    // Check if move is correct
     const result = checkMove(move, currentBranch, puzzle.solution);
 
     if (result.isCorrect) {
-      // Place the stone
       const newPosition = position.map((row) => [...row]);
       newPosition[y][x] = playerColor;
       setPosition(newPosition);
       setMoveHistory([...moveHistory, move]);
       setLastMove(move);
 
-      // Check if solved
       if (isPuzzleSolved(result.nextBranch, moveHistory.length + 1)) {
         setStatus('correct');
         setTimeout(onSolved, 500);
       } else {
-        // AI responds
         setCurrentBranch(result.nextBranch);
         setTimeout(() => {
           const response = getResponseMove(result.nextBranch);
@@ -71,11 +64,9 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
             setMoveHistory((prev) => [...prev, response]);
             setLastMove(response);
 
-            // Update branch after response
             const responseBranch = result.nextBranch[0]?.responses || [];
             setCurrentBranch(responseBranch);
 
-            // Check if solved after response
             if (isPuzzleSolved(responseBranch, moveHistory.length + 2)) {
               setStatus('correct');
               setTimeout(onSolved, 500);
@@ -84,7 +75,6 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
         }, 400);
       }
     } else {
-      // Wrong move
       const newPosition = position.map((row) => [...row]);
       newPosition[y][x] = playerColor;
       setPosition(newPosition);
@@ -111,7 +101,7 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium"
+            className="px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium"
           >
             Correct!
           </motion.div>
@@ -121,7 +111,7 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="px-4 py-2 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-400 text-sm font-medium"
+            className="px-4 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium"
           >
             Try again
           </motion.div>
@@ -141,121 +131,111 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
       {/* Board */}
       <div className="relative select-none">
         <div
-          className="relative rounded-xl p-0.5"
+          className="relative rounded-xl"
           style={{
-            background: 'linear-gradient(145deg, #1a1612 0%, #2a231c 50%, #1a1612 100%)',
-            boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.7)',
+            width: boardWidth,
+            height: boardHeight,
+            background: 'linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%)',
+            boxShadow: `
+              0 0 0 1px rgba(255, 255, 255, 0.03),
+              0 15px 40px -10px rgba(0, 0, 0, 0.5)
+            `,
           }}
         >
-          <div
-            className="relative rounded-lg overflow-hidden"
-            style={{ width: boardWidth, height: boardHeight }}
+          {/* Grid */}
+          <svg
+            width={boardWidth}
+            height={boardHeight}
+            className="absolute inset-0 pointer-events-none"
           >
-            {/* Wood background */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(180deg,
-                  #d4a55a 0%, #dcb06a 10%, #d4a55a 20%,
-                  #dbb268 35%, #d4a55a 50%, #dcb06a 65%,
-                  #d4a55a 80%, #dbb268 90%, #d4a55a 100%)`,
-              }}
-            />
+            {Array.from({ length: viewport.width }).map((_, i) => (
+              <line
+                key={`v-${i}`}
+                x1={boardPadding + i * cellSize}
+                y1={boardPadding}
+                x2={boardPadding + i * cellSize}
+                y2={boardPadding + gridHeight}
+                stroke="rgba(255, 255, 255, 0.12)"
+                strokeWidth={0.5}
+              />
+            ))}
+            {Array.from({ length: viewport.height }).map((_, i) => (
+              <line
+                key={`h-${i}`}
+                x1={boardPadding}
+                y1={boardPadding + i * cellSize}
+                x2={boardPadding + gridWidth}
+                y2={boardPadding + i * cellSize}
+                stroke="rgba(255, 255, 255, 0.12)"
+                strokeWidth={0.5}
+              />
+            ))}
+          </svg>
 
-            {/* Grid */}
-            <svg
-              width={boardWidth}
-              height={boardHeight}
-              className="absolute inset-0 pointer-events-none"
-            >
-              {/* Lines */}
-              {Array.from({ length: viewport.width }).map((_, i) => (
-                <line
-                  key={`v-${i}`}
-                  x1={boardPadding + i * cellSize}
-                  y1={boardPadding}
-                  x2={boardPadding + i * cellSize}
-                  y2={boardPadding + gridHeight}
-                  stroke="#3a2a15"
-                  strokeWidth={0.8}
-                  strokeOpacity={0.8}
-                />
-              ))}
-              {Array.from({ length: viewport.height }).map((_, i) => (
-                <line
-                  key={`h-${i}`}
-                  x1={boardPadding}
-                  y1={boardPadding + i * cellSize}
-                  x2={boardPadding + gridWidth}
-                  y2={boardPadding + i * cellSize}
-                  stroke="#3a2a15"
-                  strokeWidth={0.8}
-                  strokeOpacity={0.8}
-                />
-              ))}
-            </svg>
+          {/* Intersections */}
+          {Array.from({ length: viewport.height }).map((_, y) =>
+            Array.from({ length: viewport.width }).map((_, x) => {
+              const stone = position[y]?.[x];
+              const isLast = lastMove?.x === x && lastMove?.y === y;
+              const canPlay = status === 'solving' && isPlayerTurn && stone === null;
+              const isHovered = hoveredPos?.x === x && hoveredPos?.y === y;
 
-            {/* Intersections */}
-            {Array.from({ length: viewport.height }).map((_, y) =>
-              Array.from({ length: viewport.width }).map((_, x) => {
-                const stone = position[y]?.[x];
-                const isLast = lastMove?.x === x && lastMove?.y === y;
-                const canPlay = status === 'solving' && isPlayerTurn && stone === null;
-                const isHovered = hoveredPos?.x === x && hoveredPos?.y === y;
+              return (
+                <div
+                  key={`${x}-${y}`}
+                  className="absolute"
+                  style={{
+                    left: boardPadding + x * cellSize - cellSize / 2,
+                    top: boardPadding + y * cellSize - cellSize / 2,
+                    width: cellSize,
+                    height: cellSize,
+                    cursor: canPlay ? 'pointer' : 'default',
+                  }}
+                  onClick={() => handleClick(x, y)}
+                  onMouseEnter={() => canPlay && setHoveredPos({ x, y })}
+                  onMouseLeave={() => setHoveredPos(null)}
+                >
+                  {/* Hover preview */}
+                  <AnimatePresence>
+                    {canPlay && !stone && isHovered && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.1 }}
+                        className="absolute rounded-full pointer-events-none"
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: stoneSize,
+                          height: stoneSize,
+                          background: playerColor === 'black'
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(255, 255, 255, 0.15)',
+                          border: playerColor === 'black'
+                            ? '1px solid rgba(255, 255, 255, 0.1)'
+                            : '1px solid rgba(255, 255, 255, 0.25)',
+                        }}
+                      />
+                    )}
+                  </AnimatePresence>
 
-                return (
-                  <div
-                    key={`${x}-${y}`}
-                    className="absolute"
-                    style={{
-                      left: boardPadding + x * cellSize - cellSize / 2,
-                      top: boardPadding + y * cellSize - cellSize / 2,
-                      width: cellSize,
-                      height: cellSize,
-                      cursor: canPlay ? 'pointer' : 'default',
-                    }}
-                    onClick={() => handleClick(x, y)}
-                    onMouseEnter={() => canPlay && setHoveredPos({ x, y })}
-                    onMouseLeave={() => setHoveredPos(null)}
-                  >
-                    {/* Hover preview */}
-                    <AnimatePresence>
-                      {canPlay && !stone && isHovered && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 0.5, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="absolute rounded-full pointer-events-none"
-                          style={{
-                            left: '50%',
-                            top: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            width: stoneSize,
-                            height: stoneSize,
-                            background: playerColor === 'black'
-                              ? 'radial-gradient(ellipse at 35% 25%, #666 0%, #222 40%, #000 100%)'
-                              : 'radial-gradient(ellipse at 35% 25%, #fff 0%, #f0f0f0 40%, #d0d0d0 100%)',
-                          }}
-                        />
-                      )}
-                    </AnimatePresence>
-
-                    {/* Stone */}
-                    <AnimatePresence>
-                      {stone && (
-                        <PuzzleStone
-                          color={stone}
-                          size={stoneSize}
-                          isLastMove={isLast}
-                          isIncorrect={status === 'incorrect' && isLast}
-                        />
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  {/* Stone */}
+                  <AnimatePresence>
+                    {stone && (
+                      <PuzzleStone
+                        color={stone}
+                        size={stoneSize}
+                        isLastMove={isLast}
+                        isIncorrect={status === 'incorrect' && isLast}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -265,7 +245,7 @@ export function PuzzleBoard({ puzzle, onSolved, onFailed }: PuzzleBoardProps) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={resetPuzzle}
-          className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-medium transition-colors"
+          className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm font-medium transition-colors border border-zinc-700/50"
         >
           Try Again
         </motion.button>
@@ -286,13 +266,13 @@ function PuzzleStone({ color, size, isLastMove, isIncorrect }: PuzzleStoneProps)
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0, y: -15 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0, opacity: 0 }}
       transition={{
         type: 'spring',
-        stiffness: 400,
-        damping: 20,
+        stiffness: 500,
+        damping: 25,
       }}
       className="absolute rounded-full"
       style={{
@@ -302,30 +282,45 @@ function PuzzleStone({ color, size, isLastMove, isIncorrect }: PuzzleStoneProps)
         width: size,
         height: size,
         background: isBlack
-          ? 'radial-gradient(ellipse at 35% 25%, rgba(80, 80, 85, 1) 0%, rgba(40, 40, 45, 1) 25%, rgba(15, 15, 18, 1) 60%, rgba(5, 5, 8, 1) 100%)'
-          : 'radial-gradient(ellipse at 35% 25%, rgba(255, 255, 255, 1) 0%, rgba(245, 245, 240, 1) 25%, rgba(230, 228, 220, 1) 60%, rgba(210, 205, 195, 1) 100%)',
+          ? 'linear-gradient(145deg, #2a2a2a 0%, #0a0a0a 100%)'
+          : 'linear-gradient(145deg, #ffffff 0%, #e0e0e0 100%)',
         boxShadow: isBlack
-          ? '2px 3px 6px rgba(0, 0, 0, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.08)'
-          : '2px 3px 6px rgba(0, 0, 0, 0.25), inset -1px -1px 3px rgba(0, 0, 0, 0.08)',
+          ? '0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+          : '0 2px 6px rgba(0, 0, 0, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.05)',
       }}
     >
+      {/* Highlight */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          left: '15%',
+          top: '12%',
+          width: '30%',
+          height: '25%',
+          background: isBlack
+            ? 'radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse, rgba(255,255,255,0.6) 0%, transparent 70%)',
+        }}
+      />
+
       {/* Last move / incorrect indicator */}
       {isLastMove && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute rounded-sm"
+          className="absolute"
           style={{
             left: '50%',
             top: '50%',
             transform: 'translate(-50%, -50%)',
-            width: size * 0.25,
-            height: size * 0.25,
+            width: size * 0.28,
+            height: size * 0.28,
+            borderRadius: '2px',
             background: isIncorrect
               ? '#ef4444'
               : isBlack
-              ? 'rgba(255, 255, 255, 0.7)'
-              : 'rgba(0, 0, 0, 0.6)',
+              ? 'rgba(255, 255, 255, 0.6)'
+              : 'rgba(0, 0, 0, 0.5)',
           }}
         />
       )}
